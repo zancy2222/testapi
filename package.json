@@ -1,0 +1,16 @@
+{
+  "name": "testapi",
+  "version": "1.0.0",
+  "description": "One API, two systems: a learning demo",
+  "main": "api/server.js",
+  "scripts": {
+    "start": "node start-all.js",
+    "api": "node api/server.js",
+    "store": "node store/server.js",
+    "admin": "node admin/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}

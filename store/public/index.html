@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>System 1 - Online Store</title>
+  <link rel="icon" href="logo.webp" />
+  <style>
+    :root {
+      --yellow: #fcd200;
+      --yellow-dark: #e0ba00;
+      --ink: #141414;
+      --muted: #6b6b6b;
+      --line: #e6e6e6;
+      --bg: #ffffff;
+      --soft: #fffbe5;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--bg); }
+
+    header { border-bottom: 6px solid var(--yellow); }
+    .bar { max-width: 1080px; margin: 0 auto; padding: 18px 24px; display: flex; align-items: center; gap: 16px; }
+    .bar img { width: 52px; height: 52px; }
+    .bar h1 { margin: 0; font-size: 22px; letter-spacing: -0.01em; }
+    .bar p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+    .tag { margin-left: auto; background: var(--ink); color: var(--yellow); font-size: 12px; font-weight: 700; padding: 6px 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    main { max-width: 1080px; margin: 0 auto; padding: 24px; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .toolbar label { font-weight: 600; font-size: 14px; }
+
+    input { font: inherit; padding: 9px 10px; border: 2px solid var(--ink); background: #fff; outline: none; }
+    input:focus { border-color: var(--yellow-dark); }
+
+    button { font: inherit; font-weight: 700; padding: 9px 16px; border: 2px solid var(--ink); background: var(--yellow); color: var(--ink); cursor: pointer; }
+    button:hover { background: var(--yellow-dark); }
+    button.ghost { background: #fff; }
+    button.ghost:hover { background: var(--soft); }
+    button:disabled { background: var(--line); color: var(--muted); border-color: var(--line); cursor: not-allowed; }
+
+    #message { margin-top: 16px; padding: 12px 14px; font-weight: 600; display: none; border-left: 6px solid; }
+    #message.ok { display: block; background: var(--soft); border-color: var(--yellow); }
+    #message.err { display: block; background: #fdecec; border-color: #c62828; color: #8e1b1b; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 20px; }
+    .card { border: 2px solid var(--ink); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .card h3 { margin: 0; font-size: 17px; }
+    .price { align-self: flex-start; background: var(--yellow); font-size: 20px; font-weight: 800; padding: 2px 8px; }
+    .stock { color: var(--muted); font-size: 14px; }
+    .stock.out { color: #c62828; font-weight: 600; }
+    .buy { display: flex; gap: 8px; margin-top: auto; }
+    .buy input { width: 70px; }
+    .buy button { flex: 1; }
+    .empty { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <img src="logo.webp" alt="Logo" />
+      <div>
+        <h1>Online Store</h1>
+        <p>Port 4000 · data from the API at localhost:3000</p>
+      </div>
+      <span class="tag">System 1</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <label for="customer">Your name</label>
+      <input id="customer" placeholder="Juan" />
+      <button class="ghost" onclick="loadProducts()">Refresh</button>
+    </div>
+
+    <div id="message"></div>
+    <div class="grid" id="products"><p class="empty">Loading...</p></div>
+  </main>
+
+  <script>
+    // The ONLY thing that connects this website to the API:
+    const API_URL = "http://localhost:3000/api";
+    // Tells the API who is calling (shows up in the API terminal)
+    const HEADERS = { "Content-Type": "application/json", "X-Client-App": "STORE (port 4000)" };
+
+    // GET /api/products -> show the products
+    async function loadProducts() {
+      try {
+        const res = await fetch(`${API_URL}/products`, { headers: HEADERS });
+        const products = await res.json();
+
+        document.getElementById("products").innerHTML = products.map((p) => `
+          <div class="card">
+            <h3>${p.name}</h3>
+            <div class="price">₱${p.price}</div>
+            <div class="stock ${p.stock === 0 ? "out" : ""}">
+              ${p.stock === 0 ? "Out of stock" : `${p.stock} in stock`}
+            </div>
+            <div class="buy">
+              <input type="number" id="qty-${p.id}" value="1" min="1" max="${p.stock}" />
+              <button onclick="buy(${p.id})" ${p.stock === 0 ? "disabled" : ""}>
+                ${p.stock === 0 ? "Sold out" : "Buy"}
+              </button>
+            </div>
+          </div>
+        `).join("") || `<p class="empty">No products yet.</p>`;
+      } catch (err) {
+        document.getElementById("products").innerHTML =
+          `<p class="empty">Cannot reach the API. Is it running on port 3000?</p>`;
+      }
+    }
+
+    // POST /api/orders -> buy a product
+    async function buy(productId) {
+      const quantity = document.getElementById(`qty-${productId}`).value;
+      const customer = document.getElementById("customer").value || "Guest";
+
+      const res = await fetch(`${API_URL}/orders`, {
+        method: "POST",
+        headers: HEADERS,
+        body: JSON.stringify({ productId, quantity, customer }),
+      });
+      const data = await res.json();
+
+      const msg = document.getElementById("message");
+      if (res.ok) {
+        msg.className = "ok";
+        msg.textContent = `Order #${data.id}: ${data.quantity} x ${data.productName} = ₱${data.total}`;
+      } else {
+        msg.className = "err";
+        msg.textContent = data.error;
+      }
+      loadProducts();
+    }
+
+    loadProducts();
+  </script>
+</body>
+</html>

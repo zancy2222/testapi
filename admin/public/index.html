@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>System 2 - Admin Panel</title>
+  <link rel="icon" href="logo.webp" />
+  <style>
+    :root {
+      --yellow: #fcd200;
+      --yellow-dark: #e0ba00;
+      --ink: #141414;
+      --muted: #6b6b6b;
+      --line: #e6e6e6;
+      --bg: #ffffff;
+      --soft: #fffbe5;
+      --red: #c62828;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--bg); }
+
+    header { border-bottom: 6px solid var(--yellow); }
+    .bar { max-width: 1080px; margin: 0 auto; padding: 18px 24px; display: flex; align-items: center; gap: 16px; }
+    .bar img { width: 52px; height: 52px; }
+    .bar h1 { margin: 0; font-size: 22px; letter-spacing: -0.01em; }
+    .bar p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+    .tag { margin-left: auto; background: var(--ink); color: var(--yellow); font-size: 12px; font-weight: 700; padding: 6px 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    main { max-width: 1080px; margin: 0 auto; padding: 24px; display: grid; gap: 28px; }
+    section h2 { margin: 0 0 12px; font-size: 16px; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 12px; }
+    section h2::before { content: ""; width: 14px; height: 14px; background: var(--yellow); border: 2px solid var(--ink); }
+
+    .form { display: flex; flex-wrap: wrap; gap: 10px; }
+    input { font: inherit; padding: 9px 10px; border: 2px solid var(--ink); background: #fff; outline: none; min-width: 0; }
+    input:focus { border-color: var(--yellow-dark); }
+    #name { flex: 2 1 200px; }
+    #price, #stock { flex: 1 1 110px; }
+
+    button { font: inherit; font-weight: 700; padding: 8px 14px; border: 2px solid var(--ink); background: var(--yellow); color: var(--ink); cursor: pointer; }
+    button:hover { background: var(--yellow-dark); }
+    button.ghost { background: #fff; }
+    button.ghost:hover { background: var(--soft); }
+    button.danger { background: #fff; color: var(--red); border-color: var(--red); }
+    button.danger:hover { background: var(--red); color: #fff; }
+    button.small { padding: 5px 10px; font-size: 13px; }
+    h2 button { margin-left: auto; text-transform: none; letter-spacing: 0; }
+
+    .table-wrap { overflow-x: auto; border: 2px solid var(--ink); }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { background: var(--yellow); text-align: left; padding: 10px 12px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--ink); white-space: nowrap; }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--soft); }
+    .actions { display: flex; gap: 6px; }
+    .num { font-variant-numeric: tabular-nums; }
+    .low { color: var(--red); font-weight: 700; }
+    .empty { color: var(--muted); text-align: center; padding: 18px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <img src="logo.webp" alt="Logo" />
+      <div>
+        <h1>Admin Panel</h1>
+        <p>Port 5000 · uses the SAME API at localhost:3000</p>
+      </div>
+      <span class="tag">System 2</span>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>Add product</h2>
+      <div class="form">
+        <input id="name" placeholder="Name" />
+        <input id="price" type="number" placeholder="Price" />
+        <input id="stock" type="number" placeholder="Stock" />
+        <button onclick="addProduct()">Add product</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Products <button class="ghost small" onclick="loadAll()">Refresh</button></h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Name</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
+          <tbody id="products"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Orders from the Store</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Customer</th><th>Product</th><th>Qty</th><th>Total</th><th>Date</th></tr></thead>
+          <tbody id="orders"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Same API as the Store. Different website, same data.
+    const API_URL = "http://localhost:3000/api";
+    const HEADERS = { "Content-Type": "application/json", "X-Client-App": "ADMIN (port 5000)" };
+
+    // GET /api/products
+    async function loadProducts() {
+      const res = await fetch(`${API_URL}/products`, { headers: HEADERS });
+      const products = await res.json();
+      document.getElementById("products").innerHTML = products.map((p) => `
+        <tr>
+          <td class="num">${p.id}</td>
+          <td>${p.name}</td>
+          <td class="num">₱${p.price}</td>
+          <td class="num ${p.stock < 5 ? "low" : ""}">${p.stock}</td>
+          <td>
+            <div class="actions">
+              <button class="small" onclick="restock(${p.id}, ${p.stock})">+10 stock</button>
+              <button class="small danger" onclick="deleteProduct(${p.id})">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join("") || `<tr><td colspan="5" class="empty">No products yet.</td></tr>`;
+    }
+
+    // GET /api/orders
+    async function loadOrders() {
+      const res = await fetch(`${API_URL}/orders`, { headers: HEADERS });
+      const orders = await res.json();
+      document.getElementById("orders").innerHTML = orders.slice().reverse().map((o) => `
+        <tr>
+          <td class="num">${o.id}</td>
+          <td>${o.customer}</td>
+          <td>${o.productName}</td>
+          <td class="num">${o.quantity}</td>
+          <td class="num">₱${o.total}</td>
+          <td>${new Date(o.date).toLocaleString()}</td>
+        </tr>
+      `).join("") || `<tr><td colspan="6" class="empty">No orders yet.</td></tr>`;
+    }
+
+    // POST /api/products
+    async function addProduct() {
+      const body = {
+        name: document.getElementById("name").value,
+        price: document.getElementById("price").value,
+        stock: document.getElementById("stock").value,
+      };
+      const res = await fetch(`${API_URL}/products`, {
+        method: "POST",
+        headers: HEADERS,
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) return alert((await res.json()).error);
+      ["name", "price", "stock"].forEach((id) => (document.getElementById(id).value = ""));
+      loadProducts();
+    }
+
+    // PUT /api/products/:id
+    async function restock(id, currentStock) {
+      await fetch(`${API_URL}/products/${id}`, {
+        method: "PUT",
+        headers: HEADERS,
+        body: JSON.stringify({ stock: currentStock + 10 }),
+      });
+      loadProducts();
+    }
+
+    // DELETE /api/products/:id
+    async function deleteProduct(id) {
+      if (!confirm("Delete this product?")) return;
+      await fetch(`${API_URL}/products/${id}`, { method: "DELETE", headers: HEADERS });
+      loadProducts();
+    }
+
+    function loadAll() {
+      loadProducts().catch(() => alert("Cannot reach the API. Is it running on port 3000?"));
+      loadOrders();
+    }
+
+    loadAll();
+  </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Coke 1.5L",
+      "price": 75,
+      "stock": 20
+    },
+    {
+      "id": 2,
+      "name": "Lucky Me Pancit Canton",
+      "price": 18,
+      "stock": 50
+    },
+    {
+      "id": 3,
+      "name": "Skyflakes",
+      "price": 10,
+      "stock": 40
+    }
+  ],
+  "orders": []
+}
