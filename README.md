@@ -1,6 +1,6 @@
-# One API, Two Systems: Learning Demo
+# One API, Two Systems
 
-This project shows that **one API can serve many systems at the same time.**
+A learning demo that shows **one API can serve many systems at the same time.**
 
 ```
    ┌──────────────────────┐          ┌──────────────────────┐
@@ -27,7 +27,7 @@ This project shows that **one API can serve many systems at the same time.**
 
 **Requirement:** [Node.js](https://nodejs.org) (v18 or newer). Check with `node -v`.
 
-Open a terminal in this folder (`E:\testapi`), then:
+Open a terminal in this folder, then:
 
 ```bash
 npm install
@@ -55,7 +55,19 @@ Open these in your browser (put them **side by side**):
 
 Stop everything with **Ctrl + C**.
 
-> `npm run api` · `npm run store` · `npm run admin`
+To run each one in its own terminal instead:
+
+```bash
+npm run api
+```
+
+```bash
+npm run store
+```
+
+```bash
+npm run admin
+```
 
 To reset the data, stop the servers and delete `api/data.json`. It is recreated with sample products on the next start.
 
@@ -66,16 +78,21 @@ To reset the data, stop the servers and delete `api/data.json`. It is recreated 
 ```
 testapi/
 ├── api/
-│   ├── server.js        ← THE API (all the rules + data)
-│   └── data.json        ← the "database" (auto-created)
+│   ├── server.js          ← THE API (all the rules + data)
+│   └── data.json          ← the "database" (auto-created)
 ├── store/
-│   ├── server.js        ← System 1 web server (port 4000)
-│   └── public/index.html← Store page (uses fetch to call the API)
+│   ├── server.js          ← System 1 web server (port 4000)
+│   └── public/
+│       ├── index.html     ← Store page (uses fetch to call the API)
+│       └── logo.webp
 ├── admin/
-│   ├── server.js        ← System 2 web server (port 5000)
-│   └── public/index.html← Admin page (uses fetch to call the SAME API)
-├── start-all.js         ← starts all 3 with "npm start"
-└── package.json
+│   ├── server.js          ← System 2 web server (port 5000)
+│   └── public/
+│       ├── index.html     ← Admin page (uses fetch to call the SAME API)
+│       └── logo.webp
+├── start-all.js           ← starts all 3 with "npm start"
+├── package.json
+└── README.md
 ```
 
 Notice: **the Store and Admin folders have no data at all.** They only have a web page. All data lives in the API.
@@ -98,7 +115,7 @@ Notice: **the Store and Admin folders have no data at all.** They only have a we
 
 ## 4. How to explain it to your audience
 
-### The simple analogy: a restaurant kitchen 🍳
+### The simple analogy: a restaurant kitchen
 
 - The **API** is the **kitchen**. It has the food (data) and the rules (e.g. "you can't order more than what's in stock").
 - **System 1 (Store)** is the **dine-in counter** where customers order.
